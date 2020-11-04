@@ -1,4 +1,4 @@
-from ..application import db
+from application import db
 
 class Category(db.Model):
     __tablename__ = 'categories'
@@ -14,5 +14,6 @@ class Image(db.Model):
     path = db.Column(db.String)
     unit_features = db.Column(db.ARRAY(db.Float))
     magnitude = db.Column(db.Float)
+    score = db.Column(db.Float)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     category = db.relationship("Category", back_populates="images")

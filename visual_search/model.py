@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torchvision import models, transforms
+from torchvision import models
 
 class ResnetExt(torch.nn.Module):
     def __init__(self):
@@ -16,5 +16,7 @@ class ResnetExt(torch.nn.Module):
     def forward(self, x):
         features = self.feature_extractor(x)
         features = torch.flatten(features, 1)
+        magnitudes = torch.norm(features, dim=1)
+        unit_features = features / magnitudes[:, None]
         out = self.fc(features)
-        return out, features
+        return out, unit_features, magnitudes
