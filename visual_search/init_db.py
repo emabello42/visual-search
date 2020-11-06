@@ -1,13 +1,13 @@
-from ..application import db, DBConfig
+from application import db, DBConfig
 from sqlalchemy_utils import create_database
 import ast
-from models import Category
+from database.models import Category
 
 def init_database():
     db.create_all()
 
     # create image categories
-    with open("../imagenet.txt", "r") as f:
+    with open("imagenet.txt", "r") as f:
         dict_categories = ast.literal_eval(f.read())
         categories = []
         for k,v in dict_categories.items():

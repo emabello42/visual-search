@@ -11,6 +11,9 @@ from model import ResnetExt
 from torchvision import datasets
 from torchvision import transforms
 import time
+import logging
+import threading
+from database.db_worker import DatabaseWorker
 
 
 class VisualSearch:
@@ -60,40 +63,30 @@ class VisualSearch:
             db.session.commit()
 
     def save_image_batch(self, path, batch_size=256):
-        categories = db.session.query(Category).all()
-        categories_map = {}
-        for c in categories:
-            categories_map[c.id] = c
+        db_worker = DatabaseWorker()
 
         image_data = datasets.ImageFolder(path, transform=self.data_transform)
         image_loader = torch.utils.data.DataLoader(
-            image_data, batch_size, shuffle=False, num_workers=0)
+            image_data, batch_size, shuffle=False, num_workers=8)
+
+        # turn-on the worker thread
+        threading.Thread(target=db_worker.save_image_batch,
+                         daemon=True).start()
 
         img_idx = 0
         for batch_idx, (data, _) in enumerate(image_loader):
             start = time.time()
-            unit_features, magnitudes, category_ids, scores = self._compute_features(
-                data)
-            end1 = time.time()
-            img_bulk = []
-            for unit_feat, mag, cat_id, score in zip(unit_features, magnitudes, category_ids, scores):
-                new_img = Image(path=image_data.imgs[img_idx][0],
-                                unit_features=unit_feat.tolist(),
-                                magnitude=mag.item(),
-                                category=categories_map[cat_id],
-                                score=score.item())
-                img_bulk.append(new_img)
-                img_idx += 1
-            end2 = time.time()
-            db.session.bulk_save_objects(img_bulk)
-            end3 = time.time()
-            db.session.commit()
+            img_features = self._compute_features(data)
+            paths = [image_data.imgs[i][0] for i in range(
+                img_idx, min(batch_size+img_idx, len(image_data.imgs)))]
+            img_idx += batch_size
+            db_worker.qImgData.put((paths, *img_features))
             end = time.time()
-            print("Batch ", batch_idx, " processed in ", end-start, "s")
-            print("compute features: ", end1 - start)
-            print("create images objects: ", end2 - end1)
-            print("save to database: ", end-end2)
-            print("commit database: ", end-end3)
+            logging.debug("Batch " + str(batch_idx) +
+                          " processed in " + str(end-start) + "s")
+
+        # block until all tasks are done
+        db_worker.qImgData.join()
 
     def find_similarities(self, img):
         if img.size[0] > 299 and img.size[1] > 299:
@@ -113,8 +106,6 @@ if __name__ == '__main__':
 
     if args['save']:
         visualSearch.save_image_batch(args['save'])
-        # image_files = glob.glob(f"{args['save']}/*.jpg")
-        # for f in image_files:
-        #     visualSearch.save_image(f)
+        print('All work completed')
     elif args['find']:
         img = PILImage.open(args['find'])
