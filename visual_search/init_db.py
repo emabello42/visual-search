@@ -11,7 +11,7 @@ def init_database():
         dict_categories = ast.literal_eval(f.read())
         categories = []
         for k,v in dict_categories.items():
-            categories.append(Category(id= k, description=v))
+            categories.append(Category(label= k, description=v))
         
         db.session.bulk_save_objects(categories)
         db.session.commit()

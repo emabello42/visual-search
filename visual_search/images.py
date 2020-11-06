@@ -14,6 +14,10 @@ import time
 import logging
 import threading
 from database.db_worker import DatabaseWorker
+import utils
+from collections import namedtuple
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 
 class VisualSearch:
@@ -30,6 +34,8 @@ class VisualSearch:
         self.model.eval()
 
     def _compute_features(self, input_batch):
+        output_batch = namedtuple(
+            "BatchFeatures", "unit_features magnitudes scores category_ids")
         if self.use_gpu:
             input_batch = input_batch.to('cuda')
         with torch.no_grad():
@@ -44,23 +50,24 @@ class VisualSearch:
         for i, p in enumerate(probabilities):
             scores.append(p[category_ids[i]])
 
-        unit_features = unit_features.cpu().numpy()
-        magnitudes = magnitudes.cpu().numpy()
-        scores = np.array(scores)
-        return unit_features, magnitudes, category_ids, scores
+        output_batch.unit_features = unit_features.cpu().numpy()
+        output_batch.magnitudes = magnitudes.cpu().numpy()
+        output_batch.scores = np.array(scores)
+        output_batch.category_ids = category_ids
+        return output_batch
 
-    def save_image(self, path):
-        img = PILImage.open(f)
-        if img.size[0] > 299 and img.size[1] > 299:
-            features, category_id = self._compute_features(img)
-            category = db.session.query(Category).filter(
-                Category.id == category_id).first()
-            magnitude = np.linalg.norm(features)
-            unit_features = features / magnitude
-            new_img = Image(path=path, unit_features=unit_features.tolist(
-            ), magnitude=magnitude.item(), category=category)
-            db.session.add(new_img)
-            db.session.commit()
+    # def save_image(self, path):
+    #     img = PILImage.open(f)
+    #     if img.size[0] > 299 and img.size[1] > 299:
+    #         features, category_id = self._compute_features(img)
+    #         category = db.session.query(Category).filter(
+    #             Category.id == category_id).first()
+    #         magnitude = np.linalg.norm(features)
+    #         unit_features = features / magnitude
+    #         new_img = Image(path=path, unit_features=unit_features.tolist(
+    #         ), magnitude=magnitude.item(), category=category)
+    #         db.session.add(new_img)
+    #         db.session.commit()
 
     def save_image_batch(self, path, batch_size=256):
         db_worker = DatabaseWorker()
@@ -76,11 +83,13 @@ class VisualSearch:
         img_idx = 0
         for batch_idx, (data, _) in enumerate(image_loader):
             start = time.time()
-            img_features = self._compute_features(data)
+            batch_features = self._compute_features(data)
             paths = [image_data.imgs[i][0] for i in range(
                 img_idx, min(batch_size+img_idx, len(image_data.imgs)))]
             img_idx += batch_size
-            db_worker.qImgData.put((paths, *img_features))
+
+            batch_features.paths = paths
+            db_worker.qImgData.put(batch_features)
             end = time.time()
             logging.debug("Batch " + str(batch_idx) +
                           " processed in " + str(end-start) + "s")
@@ -89,8 +98,45 @@ class VisualSearch:
         db_worker.qImgData.join()
 
     def find_similarities(self, img):
-        if img.size[0] > 299 and img.size[1] > 299:
-            features, category_id = self._compute_features(img)
+        data = self.data_transform(img).unsqueeze(0)
+        img_features = self._compute_features(data)
+        img_category_label = img_features.category_ids[0].item()
+        logging.debug("Category found: " + str(img_category_label))
+        img_ufeats = img_features.unit_features[0]
+        images = db.session.query(Image).join(Category, Category.id == Image.category_id).filter(
+            Category.label == img_category_label).all()
+
+        if len(images) == 0:
+            start = time.time()
+            images = db.session.query(Image).all()
+            end = time.time()
+            logging.debug("Full query images time: " + str(end-start) + "s")
+        images_dict = {img.id: img for img in images}
+        similarities = []
+        for img in images:
+            ufeats = utils.convert_array(img.unit_features)
+            cosine = img_ufeats.dot(ufeats)
+            similarities.append((img, cosine))
+
+        similarities = [e for e in sorted(
+            similarities, key=lambda item: item[1])]
+        width = 5
+        height = 5
+        rows = 2
+        cols = 2
+        axes = []
+        fig = plt.figure()
+        idx = 1
+        for s in similarities[-4:]:
+            similar_img = mpimg.imread(s[0].path)
+            axes.append(fig.add_subplot(rows, cols, idx))
+            subplot_title = ("cosine: "+str(s[1]))
+            axes[-1].set_title(subplot_title)
+            plt.imshow(similar_img)
+            idx += 1
+
+        fig.tight_layout()
+        plt.show()
 
 
 if __name__ == '__main__':
@@ -109,3 +155,4 @@ if __name__ == '__main__':
         print('All work completed')
     elif args['find']:
         img = PILImage.open(args['find'])
+        visualSearch.find_similarities(img)
