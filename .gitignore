@@ -13,6 +13,7 @@ build/
 develop-eggs/
 dist/
 data/
+.ipynb_checkpoints/
 downloads/
 eggs/
 .eggs/
