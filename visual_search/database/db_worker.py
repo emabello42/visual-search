@@ -3,6 +3,7 @@ import time
 from application import db
 from database.models import Image, Category
 import logging
+import utils
 
 class DatabaseWorker:
     def __init__(self):
@@ -19,7 +20,7 @@ class DatabaseWorker:
             start = time.time()
             for path, unit_feat, mag, cat_id, score in zip(paths, unit_features, magnitudes, category_ids, scores):
                 new_img = Image(path=path,
-                                unit_features=unit_feat.tolist(),
+                                unit_features_data=utils.adapt_array(unit_feat),
                                 magnitude=mag.item(),
                                 category=categories_map[cat_id],
                                 score=score.item())
