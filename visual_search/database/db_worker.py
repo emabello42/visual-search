@@ -14,13 +14,17 @@ class DatabaseWorker:
         categories = session.query(Category).all()
         categories_map = {}
         for c in categories:
-            categories_map[c.id] = c
+            categories_map[c.label] = c
         while True:
-            (paths, unit_features, magnitudes, category_ids, scores) = self.qImgData.get()
+            batch = self.qImgData.get()
             start = time.time()
-            for path, unit_feat, mag, cat_id, score in zip(paths, unit_features, magnitudes, category_ids, scores):
+            for path, unit_feat, mag, cat_id, score in zip(batch.paths,
+                                                          batch.unit_features,
+                                                          batch.magnitudes,
+                                                          batch.category_ids,
+                                                          batch.scores):
                 new_img = Image(path=path,
-                                unit_features_data=utils.adapt_array(unit_feat),
+                                unit_features=utils.adapt_array(unit_feat),
                                 magnitude=mag.item(),
                                 category=categories_map[cat_id],
                                 score=score.item())
