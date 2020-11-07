@@ -14,7 +14,7 @@ import time
 import logging
 import threading
 from database.db_worker import DatabaseWorker
-import utils
+from utils import convert_array, ProcessingStats
 from collections import namedtuple
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -32,8 +32,10 @@ class VisualSearch:
         if self.use_gpu:
             self.model.to('cuda')
         self.model.eval()
+        self.pstats = ProcessingStats()
 
     def _compute_features(self, input_batch):
+        self.pstats.start("compute_features")
         output_batch = namedtuple(
             "BatchFeatures", "unit_features magnitudes scores category_ids")
         if self.use_gpu:
@@ -54,6 +56,7 @@ class VisualSearch:
         output_batch.magnitudes = magnitudes.cpu().numpy()
         output_batch.scores = np.array(scores)
         output_batch.category_ids = category_ids
+        self.pstats.end("compute_features")
         return output_batch
 
     # def save_image(self, path):
@@ -98,28 +101,34 @@ class VisualSearch:
         db_worker.qImgData.join()
 
     def find_similarities(self, img):
+        self.pstats.start("find_similarities")
         data = self.data_transform(img).unsqueeze(0)
         img_features = self._compute_features(data)
         img_category_label = img_features.category_ids[0].item()
         logging.debug("Category found: " + str(img_category_label))
         img_ufeats = img_features.unit_features[0]
+        self.pstats.start("query_images_with_id")
         images = db.session.query(Image).join(Category, Category.id == Image.category_id).filter(
             Category.label == img_category_label).all()
-
+        self.pstats.end("query_images_with_id")
         if len(images) == 0:
-            start = time.time()
+            self.pstats.start("query_all_images")
             images = db.session.query(Image).all()
-            end = time.time()
-            logging.debug("Full query images time: " + str(end-start) + "s")
+            self.pstats.end("query_all_images")
         images_dict = {img.id: img for img in images}
         similarities = []
         for img in images:
-            ufeats = utils.convert_array(img.unit_features)
+            self.pstats.start("convert array of features")
+            ufeats = convert_array(img.unit_features)
+            self.pstats.end("convert array of features")
+            self.pstats.start("dot product of unit features")
             cosine = img_ufeats.dot(ufeats)
+            self.pstats.end("dot product of unit features")
             similarities.append((img, cosine))
 
         similarities = [e for e in sorted(
             similarities, key=lambda item: item[1])]
+        self.pstats.end("find_similarities")
         width = 5
         height = 5
         rows = 2
@@ -156,3 +165,4 @@ if __name__ == '__main__':
     elif args['find']:
         img = PILImage.open(args['find'])
         visualSearch.find_similarities(img)
+        logging.info(visualSearch.pstats)
