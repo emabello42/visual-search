@@ -22,6 +22,7 @@ jobs:
             # source activate adj
             conda env create -f environment.yml
             conda init bash
+            source ~/.bashrc
             conda activate visual-search
             conda install -qy conda-build anaconda-client pytest pytest-cov
             conda config --set auto_update_conda no
@@ -41,6 +42,7 @@ jobs:
           command: |
             # source activate adj
             conda init bash
+            source ~/.bashrc
             conda activate visual-search
             pytest --color=yes -v --cov=visualsearch tests
             conda install -c conda-forge codecov
