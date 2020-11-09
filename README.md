@@ -1,6 +1,4 @@
-===============================
-visualsearch
-===============================
+# visual-search
 
 [![emabello42](https://circleci.com/gh/emabello42/visual-search.svg?style=svg)](https://circleci.com/gh/emabello42/visual-search)
 
