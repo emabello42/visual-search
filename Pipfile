@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+psycopg2 = "*"
+pyqt5 = "*"
+flask = "*"
+flask-sqlalchemy = "*"
+numpy = "*"
+pandas = "*"
+pytest = "*"
+torch = "==1.6.0"
+torchvision = "==0.7.0"
+matplotlib = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"

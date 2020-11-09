@@ -1,0 +1,7 @@
+[report]
+omit =
+    setup.py
+    visualsearch/__main__.py
+    visualsearch/_version.py
+    versioneer.py
+    tests/*
