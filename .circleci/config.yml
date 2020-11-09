@@ -27,6 +27,7 @@ jobs:
       - run:
           name: run tests
           command: |
+            pipenv shell
             pytest --color=yes -v --cov=visualsearch tests
             # conda install -c conda-forge codecov
             # codecov
