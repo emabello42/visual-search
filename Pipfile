@@ -4,16 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-numpy = "*"
-pandas = "*"
-matplotlib = "*"
-flask = "*"
-flask-sqlalchemy = "*"
-torch = "*"
-torchvision = "*"
 psycopg2 = "*"
 pyqt5 = "*"
-dataclasses = "*"
+flask = "*"
+flask-sqlalchemy = "*"
+numpy = "*"
+pandas = "*"
 
 [dev-packages]
 
