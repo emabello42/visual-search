@@ -13,6 +13,7 @@ torch = "*"
 torchvision = "*"
 psycopg2 = "*"
 pyqt5 = "*"
+dataclasses = "*"
 
 [dev-packages]
 
