@@ -35,7 +35,7 @@ class FindSimilaritiesRequestObject(ValidRequestObject):
         invalid_req = InvalidRequestObject()
 
         if 'params' in adict:
-            if not isinstance(adict['params'], collections.Mapping):
+            if not isinstance(adict['params'], collections.abc.Mapping):
                 invalid_req.add_error('params', "Is not iterable")
                 return invalid_req
 
