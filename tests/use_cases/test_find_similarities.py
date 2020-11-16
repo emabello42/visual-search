@@ -3,7 +3,7 @@ import pytest
 from unittest import mock
 from visualsearch.domain import image as i
 from visualsearch.use_cases import find_similarities as uc
-from visualsearch.request_objects import find_similarities as req
+import visualsearch.request_objects as req
 import uuid
 import numpy as np
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../testdata")

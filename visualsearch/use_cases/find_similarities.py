@@ -1,4 +1,4 @@
-from visualsearch.response_objects import response_objects as res
+import visualsearch.response_objects as res
 
 class FindSimilarities():
     def __init__(self, repository, feature_extractor):

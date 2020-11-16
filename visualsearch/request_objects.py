@@ -14,6 +14,7 @@ class InvalidRequestObject:
     def __bool__(self):
         return False
 
+
 class ValidRequestObject:
     
     @classmethod
@@ -24,8 +25,8 @@ class ValidRequestObject:
         return True
 
 
-class FindSimilaritiesRequestObject(ValidRequestObject):
-    accepted_params = {'path'}
+class ImageRequestObject(ValidRequestObject):
+    accepted_params = set({'path'})
 
     def __init__(self, params=None):
         self.params = params
@@ -47,3 +48,8 @@ class FindSimilaritiesRequestObject(ValidRequestObject):
             return invalid_req
 
         return cls(params=adict.get('params', None))
+
+
+class FindSimilaritiesRequestObject(ImageRequestObject):
+    accepted_params = ImageRequestObject.accepted_params.copy()
+    accepted_params.update('top')
