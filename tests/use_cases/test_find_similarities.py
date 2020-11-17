@@ -31,21 +31,13 @@ def domain_images():
 def test_find_similarities_with_path(datafiles, domain_images):
     # create feature_extractor and repo mocks
     path = str(datafiles)  # Convert from py.path object to path (str)
-    feature_extractor = mock.Mock()
-    fake_features = {
-            'example_feat1': "test",
-            'example_feat2': 40,
-            'example_feat3': 0.8
-            }
-    feature_extractor.process_image.return_value = fake_features
     repo = mock.Mock()
     repo.find_similars.return_value = domain_images
     
     input_image = os.path.join(path, "img1.jpg")
     request_object = req.FindSimilaritiesRequestObject.from_dict({'params':{'path': input_image}})
-    fs_use_case = uc.FindSimilarities(repository = repo, feature_extractor = feature_extractor)
+    fs_use_case = uc.FindSimilarities(repository = repo)
     response = fs_use_case.execute(request_object)
     assert bool(response) is True
-    repo.find_similars.assert_called_with(features = fake_features)
-    feature_extractor.process_image.assert_called_with(path = input_image)
+    repo.find_similars.assert_called_with(file_path = input_image)
     assert response.value == domain_images
