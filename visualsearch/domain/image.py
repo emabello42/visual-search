@@ -1,6 +1,3 @@
-
-
-
 class Image:
     def __init__(self, id, path, unit_features, magnitude):
         self.id = id
