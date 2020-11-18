@@ -11,11 +11,6 @@ import logging
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../testdata")
 
-@pytest.mark.datafiles(
-        os.path.join(FIXTURE_DIR, 'img1.jpg'),
-        os.path.join(FIXTURE_DIR, 'img2.jpg'),
-        os.path.join(FIXTURE_DIR, 'img3.jpg'),
-        )
 
 @pytest.fixture
 def categories():
@@ -23,7 +18,7 @@ def categories():
     return [expected_category]
 
 @pytest.fixture
-def img_features_list(datafiles):
+def img_features_list():
     img_feat1 = ImageFeatures(
                             unit_features = np.arange(2048),
                             magnitude = 101.1,
