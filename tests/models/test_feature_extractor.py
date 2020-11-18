@@ -11,8 +11,6 @@ def test_process_image():
     features = feature_extractor.process_image(path = file_img)
     assert np.linalg.norm(features.unit_features) == pytest.approx(1.0)
     assert features.magnitude >= 0
-    assert features.label >= 0
-    assert 0.0 <= features.score <= 1.0
     assert features.path == file_img
 
 def test_process_image_batch():
@@ -25,6 +23,4 @@ def test_process_image_batch():
     for features in feature_extractor.process_batch(path = FIXTURE_DIR):
         assert np.linalg.norm(features.unit_features) == pytest.approx(1.0)
         assert features.magnitude >= 0
-        assert features.label >= 0
-        assert 0.0 <= features.score <= 1.0
         assert features.path in file_list

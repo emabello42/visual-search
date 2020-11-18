@@ -11,12 +11,12 @@ class ResnetExt(torch.nn.Module):
         self.feature_extractor = torch.nn.Sequential(*modules)
         for p in self.feature_extractor.parameters():
             p.requires_grad = False
-        self.fc = model.fc
+        #self.fc = model.fc
         
     def forward(self, x):
         features = self.feature_extractor(x)
         features = torch.flatten(features, 1)
         magnitudes = torch.norm(features, dim=1)
         unit_features = features / magnitudes[:, None]
-        out = self.fc(features)
-        return out, unit_features, magnitudes
+        #out = self.fc(features)
+        return unit_features, magnitudes

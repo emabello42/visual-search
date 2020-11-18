@@ -31,34 +31,23 @@ class SaveImage():
 
     def __save_image(self, file_path):
         data = self.feature_extractor.process_image(file_path)
-        categories = self.repo.find_categories(label = data.label)
-        if categories == []:
-            raise Exception("Category with label {} not found!".format(data.label))
         new_image = Image(
                         id = uuid.uuid4(),
                         path = file_path,
                         unit_features = data.unit_features,
-                        magnitude = data.magnitude,
-                        category = categories[0],
-                        score = data.score
+                        magnitude = data.magnitude
                         )
         saved_images_count = self.repo.save_image(new_image)
         return saved_images_count
 
     def __async_save_image(self):
-        categories_map = {}
-        categories = self.repo.find_categories()
-        for c in categories:
-            categories_map[c.label] = c
         while True:
             data = self.queueImgFeatures.get()
             new_image = Image(
                             id = uuid.uuid4(),
                             path = data.path,
                             unit_features = data.unit_features,
-                            magnitude = data.magnitude,
-                            category = categories_map[data.label],
-                            score = data.score
+                            magnitude = data.magnitude
                             )
             self.saved_images_counter += self.repo.save_image(new_image)
             self.queueImgFeatures.task_done()

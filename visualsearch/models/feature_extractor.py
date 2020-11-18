@@ -16,8 +16,6 @@ import os
 class ImageFeatures:
     unit_features: np.ndarray = None
     magnitude: float = None
-    score: float = None
-    label: int = None
     path: str = None
 
 
@@ -60,8 +58,6 @@ class FeatureExtractor():
         img_features = ImageFeatures(
                 unit_features = output_batch.unit_features[0],
                 magnitude = output_batch.magnitudes[0].item(),
-                label = output_batch.labels[0],
-                score = output_batch.scores[0],
                 path = path
                 )
 
@@ -74,39 +70,23 @@ class FeatureExtractor():
 
         for batch_idx, (data, paths) in enumerate(image_loader):
             output_batch = self.__compute_features(data)
-            for img_idx, (unit_feat, mag, label, score) in enumerate(zip(output_batch.unit_features,
-                                                            output_batch.magnitudes,
-                                                            output_batch.labels,
-                                                            output_batch.scores)):
+            for img_idx, (unit_feat, mag) in enumerate(zip(output_batch.unit_features,
+                                                           output_batch.magnitudes)):
                 img_features = ImageFeatures(unit_features = unit_feat,
                                              magnitude = mag,
-                                             label = label,
-                                             score = score,
                                              path = paths[img_idx])
                 yield img_features
 
     def __compute_features(self, input_batch):
         self.pstats.start("compute_features")
-        output_batch = namedtuple("BatchFeatures",
-                                  "unit_features magnitudes scores labels")
+        output_batch = namedtuple("BatchFeatures", "unit_features magnitudes")
         if self.use_gpu:
             input_batch = input_batch.to('cuda')
         with torch.no_grad():
-            logits, unit_features, magnitudes = self.model(input_batch)
-
-        probabilities = torch.nn.functional.softmax(logits, dim=1)
-        labels = torch.argmax(probabilities, dim=1)
-
-        probabilities = probabilities.cpu().numpy()
-        labels = labels.cpu().numpy()
-        scores = []
-        for i, p in enumerate(probabilities):
-            scores.append(p[labels[i]])
+            unit_features, magnitudes = self.model(input_batch)
 
         output_batch.unit_features = unit_features.cpu().numpy()
         output_batch.magnitudes = magnitudes.cpu().numpy()
-        output_batch.scores = np.array(scores)
-        output_batch.labels = labels
         self.pstats.end("compute_features")
         return output_batch
 

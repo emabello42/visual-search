@@ -10,17 +10,12 @@ FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../test
 
 @pytest.fixture
 def domain_images():
-    category = i.Category(id=uuid.uuid4(), label = 40, description = "sample description")
     img1 = i.Image(id=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img1.jpg"),
             unit_features = np.arange(2048),
-            magnitude = 100.1,
-            category = category,
-            score = 0.9)
+            magnitude = 100.1)
     img2 = i.Image(id=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img2.jpg"),
             unit_features = np.arange(2048),
-            magnitude = 90.8,
-            category = category,
-            score = 0.9)
+            magnitude = 90.8)
 
     return [img1, img2]
 
