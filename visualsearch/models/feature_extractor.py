@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from visualsearch.configs import FeatureExtractorConfig as cfg
 from typing import List
 from collections import namedtuple
+from torch.utils.data import Dataset
+import os
 
 @dataclass
 class ImageFeatures:
@@ -17,6 +19,22 @@ class ImageFeatures:
     score: float = None
     label: int = None
     path: str = None
+
+
+class CustomImageDataSet(Dataset):
+    def __init__(self, main_dir, transform):
+        self.main_dir = main_dir
+        self.transform = transform
+        self.imgs = os.listdir(main_dir)
+
+    def __len__(self):
+        return len(self.imgs)
+
+    def __getitem__(self, idx):
+        img_loc = os.path.join(self.main_dir, self.imgs[idx])
+        image = PILImage.open(img_loc).convert("RGB")
+        tensor_image = self.transform(image)
+        return tensor_image, img_loc
 
 
 class FeatureExtractor():
@@ -50,23 +68,21 @@ class FeatureExtractor():
         return img_features
 
     def process_batch(self, path):
-        image_data = datasets.ImageFolder(path, transform=self.data_transform)
+        image_data = CustomImageDataSet(path, transform=self.data_transform)
         image_loader = torch.utils.data.DataLoader(image_data, cfg.batch_size, shuffle=False,
                                                    num_workers=cfg.num_workers)
 
-        img_idx = 0
-        for batch_idx, (data, _) in enumerate(image_loader):
+        for batch_idx, (data, paths) in enumerate(image_loader):
             output_batch = self.__compute_features(data)
-            for unit_feat, mag, label, score in zip(output_batch.unit_features,
-                                                    output_batch.magnitudes,
-                                                    output_batch.labels,
-                                                    output_batch.scores):
+            for img_idx, (unit_feat, mag, label, score) in enumerate(zip(output_batch.unit_features,
+                                                            output_batch.magnitudes,
+                                                            output_batch.labels,
+                                                            output_batch.scores)):
                 img_features = ImageFeatures(unit_features = unit_feat,
                                              magnitude = mag,
                                              label = label,
                                              score = score,
-                                             path = image_data.imgs[img_idx][0])
-                img_idx += 1
+                                             path = paths[img_idx])
                 yield img_features
 
     def __compute_features(self, input_batch):
