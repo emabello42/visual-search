@@ -13,14 +13,14 @@ FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../test
 
 @pytest.fixture
 def domain_images():
-    img1 = i.Image(code=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img1.jpg"),
+    img1 = Image(code=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img1.jpg"),
             unit_features = np.arange(2048),
             magnitude = 100.1)
-    img2 = i.Image(code=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img2.jpg"),
+    img2 = Image(code=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img2.jpg"),
             unit_features = np.arange(2048),
             magnitude = 90.8)
 
-    img3 = i.Image(code=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img3.jpg"),
+    img3 = Image(code=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img3.jpg"),
             unit_features = np.arange(2048),
             magnitude = 91.8)
     

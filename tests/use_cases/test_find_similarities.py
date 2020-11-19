@@ -39,4 +39,4 @@ def test_find_similarities_with_path(domain_images):
     assert bool(response) is True
     feature_extractor.process_image.assert_called_with(file_path)
     repo.find_similars.assert_called_with(domain_images[0])
-    assert response.value == domain_images
+    assert response.value == domain_images[1:]
