@@ -4,7 +4,6 @@ import visualsearch.request_objects as req
 import os
 from unittest import mock
 import numpy as np
-from visualsearch.models.feature_extractor import ImageFeatures
 from visualsearch.domain.image import Image
 import uuid
 import logging
@@ -12,33 +11,26 @@ import logging
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../testdata")
 
 
-
 @pytest.fixture
-def img_features_list():
-    img_feat1 = ImageFeatures(
-                            unit_features = np.arange(2048),
-                            magnitude = 101.1,
-                            path = os.path.join(FIXTURE_DIR, 'img1.jpg')
-                            )
-    img_feat2 = ImageFeatures(
-                            unit_features = np.arange(2048),
-                            magnitude = 102.1,
-                            path = os.path.join(FIXTURE_DIR, 'img2.jpg')
-                            )
+def domain_images():
+    img1 = i.Image(code=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img1.jpg"),
+            unit_features = np.arange(2048),
+            magnitude = 100.1)
+    img2 = i.Image(code=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img2.jpg"),
+            unit_features = np.arange(2048),
+            magnitude = 90.8)
 
-    img_feat3 = ImageFeatures(
-                            unit_features = np.arange(2048),
-                            magnitude = 103.1,
-                            path = os.path.join(FIXTURE_DIR, 'img3.jpg')
-                            )
+    img3 = i.Image(code=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img3.jpg"),
+            unit_features = np.arange(2048),
+            magnitude = 91.8)
+    
+    return [img1, img2, img3]
 
-    return [img_feat1, img_feat2, img_feat3]
-
-def test_save_image(img_features_list):
+def test_save_image(domain_images):
     repo = mock.Mock()
     feature_extractor = mock.Mock()
 
-    file_path = img_features_list[0].path
+    file_path = domain_images[0].path
 
     # fake image feature values
     unit_features = np.arange(2048)
@@ -46,7 +38,7 @@ def test_save_image(img_features_list):
 
     # expected return values for mocked functions
     repo.save_image.return_value = 1
-    feature_extractor.process_image.return_value = img_features_list[0] 
+    feature_extractor.process_image.return_value = domain_images[0] 
 
     use_case_save_image = uc.SaveImage(repo, feature_extractor)
     request_object = req.ImageRequestObject.from_dict({'params':{'path': file_path}})
@@ -54,16 +46,16 @@ def test_save_image(img_features_list):
     logging.debug(response.value)
     assert bool(response) is True
     feature_extractor.process_image.assert_called_with(file_path)
-    repo.save_image.assert_called()
+    repo.save_image.assert_called_with(domain_images[0])
     assert response.value == 1
 
-def test_save_image_all(img_features_list):
+def test_save_image_all(domain_images):
     repo = mock.Mock()
     feature_extractor = mock.Mock()
 
     # expected return values
     repo.save_image.return_value = 1
-    feature_extractor.process_batch.return_value = img_features_list 
+    feature_extractor.process_batch.return_value = domain_images
 
     request_object = req.ImageRequestObject.from_dict({'params':{'path': FIXTURE_DIR}})
     use_case_save_image = uc.SaveImage(repo, feature_extractor)
