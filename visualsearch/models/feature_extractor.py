@@ -51,7 +51,7 @@ class FeatureExtractor():
         output_batch = self.__compute_features(data)
 
         new_image = Image(
-                        id = uuid.uuid4(),
+                        code = uuid.uuid4(),
                         path = path,
                         unit_features = output_batch.unit_features[0],
                         magnitude = output_batch.magnitudes[0].item()
