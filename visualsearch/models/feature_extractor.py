@@ -5,18 +5,13 @@ from torchvision import transforms
 import torch
 from PIL import Image as PILImage
 import numpy as np
-from dataclasses import dataclass
 from visualsearch.configs import FeatureExtractorConfig as cfg
 from typing import List
 from collections import namedtuple
 from torch.utils.data import Dataset
 import os
-
-@dataclass
-class ImageFeatures:
-    unit_features: np.ndarray = None
-    magnitude: float = None
-    path: str = None
+import uuid
+from visualsearch.domain.image import Image
 
 
 class CustomImageDataSet(Dataset):
@@ -55,13 +50,14 @@ class FeatureExtractor():
         data = self.data_transform(img).unsqueeze(0)
         output_batch = self.__compute_features(data)
 
-        img_features = ImageFeatures(
-                unit_features = output_batch.unit_features[0],
-                magnitude = output_batch.magnitudes[0].item(),
-                path = path
-                )
+        new_image = Image(
+                        id = uuid.uuid4(),
+                        path = path,
+                        unit_features = output_batch.unit_features[0],
+                        magnitude = output_batch.magnitudes[0].item()
+                        )
 
-        return img_features
+        return new_image
 
     def process_batch(self, path):
         image_data = CustomImageDataSet(path, transform=self.data_transform)
@@ -72,10 +68,13 @@ class FeatureExtractor():
             output_batch = self.__compute_features(data)
             for img_idx, (unit_feat, mag) in enumerate(zip(output_batch.unit_features,
                                                            output_batch.magnitudes)):
-                img_features = ImageFeatures(unit_features = unit_feat,
-                                             magnitude = mag,
-                                             path = paths[img_idx])
-                yield img_features
+                new_image = Image(
+                            code = uuid.uuid4(),
+                            path = paths[img_idx],
+                            unit_features = unit_feat,
+                            magnitude = mag
+                            )
+                yield new_image
 
     def __compute_features(self, input_batch):
         self.pstats.start("compute_features")

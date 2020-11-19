@@ -20,7 +20,7 @@ def test_process_image_batch():
                 os.path.join(FIXTURE_DIR, "img2.jpg"),
                 os.path.join(FIXTURE_DIR, "img3.jpg")
                 ]
-    for features in feature_extractor.process_batch(path = FIXTURE_DIR):
-        assert np.linalg.norm(features.unit_features) == pytest.approx(1.0)
-        assert features.magnitude >= 0
-        assert features.path in file_list
+    for img in feature_extractor.process_batch(path = FIXTURE_DIR):
+        assert np.linalg.norm(img.unit_features) == pytest.approx(1.0)
+        assert img.magnitude >= 0
+        assert img.path in file_list

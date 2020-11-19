@@ -1,6 +1,6 @@
 class Image:
-    def __init__(self, id, path, unit_features, magnitude):
-        self.id = id
+    def __init__(self, code, path, unit_features, magnitude):
+        self.code = code
         self.path = path
         self.unit_features = unit_features
         self.magnitude = magnitude
@@ -8,7 +8,7 @@ class Image:
     @classmethod
     def from_dict(cls, adict):
         return cls(
-                id=adict['id'],
+                code=adict['code'],
                 path=adict['path'],
                 unit_features=adict['unit_features'],
                 magnitude=adict['magnitude'],
@@ -16,7 +16,7 @@ class Image:
 
     def to_dict(self):
         return {
-            'id': self.id,
+            'code': self.code,
             'path': self.path,
             'unit_features': self.unit_features,
             'magnitude': self.magnitude,

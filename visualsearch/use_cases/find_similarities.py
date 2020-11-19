@@ -15,13 +15,7 @@ class FindSimilarities():
         try:
             file_path = request_obj.params['path']
             if os.path.isfile(file_path):
-                data = self.feature_extractor.process_image(file_path)
-                query_image = Image(
-                                    id = uuid.uuid4(),
-                                    path = file_path,
-                                    unit_features = data.unit_features,
-                                    magnitude = data.magnitude
-                                   )
+                query_image = self.feature_extractor.process_image(file_path)
                 images = self.repo.find_similars(query_image)
                 return res.ResponseSuccess(images)
             else:
