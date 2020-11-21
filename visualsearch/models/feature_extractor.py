@@ -1,17 +1,15 @@
 from visualsearch.models.resnetext import ResnetExt
 from visualsearch.utils import ProcessingStats
-from torchvision import datasets
 from torchvision import transforms
 import torch
 from PIL import Image as PILImage
-import numpy as np
-from visualsearch.configs import FeatureExtractorConfig as cfg
-from typing import List
+from visualsearch.configs import FeatureExtractorConfig as Cfg
 from collections import namedtuple
 from torch.utils.data import Dataset
 import os
 import uuid
 from visualsearch.domain.image import Image
+import logging
 
 
 class CustomImageDataSet(Dataset):
@@ -43,7 +41,7 @@ class FeatureExtractor():
         if self.use_gpu:
             self.model.to('cuda')
         self.model.eval()
-        self.pstats = ProcessingStats()
+        self.stats = ProcessingStats()
 
     def process_image(self, path):
         img = PILImage.open(path)
@@ -61,23 +59,18 @@ class FeatureExtractor():
 
     def process_batch(self, path):
         image_data = CustomImageDataSet(path, transform=self.data_transform)
-        image_loader = torch.utils.data.DataLoader(image_data, cfg.batch_size, shuffle=False,
-                                                   num_workers=cfg.num_workers)
+        image_loader = torch.utils.data.DataLoader(image_data, Cfg.batch_size, shuffle=False,
+                                                   num_workers=Cfg.num_workers)
 
         for batch_idx, (data, paths) in enumerate(image_loader):
             output_batch = self.__compute_features(data)
-            for img_idx, (unit_feat, mag) in enumerate(zip(output_batch.unit_features,
-                                                           output_batch.magnitudes)):
-                new_image = Image(
-                            code = uuid.uuid4(),
-                            path = paths[img_idx],
-                            unit_features = unit_feat,
-                            magnitude = mag
-                            )
-                yield new_image
+            # TODO: send the output_batch as fast as possible to another
+            # parallel process/thread
+            yield output_batch, paths
+        logging.debug(str(self.stats))
 
     def __compute_features(self, input_batch):
-        self.pstats.start("compute_features")
+        self.stats.start("compute_features")
         output_batch = namedtuple("BatchFeatures", "unit_features magnitudes")
         if self.use_gpu:
             input_batch = input_batch.to('cuda')
@@ -86,6 +79,6 @@ class FeatureExtractor():
 
         output_batch.unit_features = unit_features.cpu().numpy()
         output_batch.magnitudes = magnitudes.cpu().numpy()
-        self.pstats.end("compute_features")
+        self.stats.end("compute_features")
         return output_batch
 
