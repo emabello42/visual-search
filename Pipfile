@@ -15,6 +15,9 @@ torch = "==1.6.0"
 torchvision = "==0.7.0"
 matplotlib = "*"
 pytest-datafiles = "*"
+h5py = "*"
+pytest-mpi = "*"
+sqlalchemy-utils = "*"
 
 [dev-packages]
 
