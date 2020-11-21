@@ -4,7 +4,10 @@ from visualsearch.models import feature_extractor  as fe
 from visualsearch.repository import postgresrepo as pg_repo
 from visualsearch.use_cases import save_image as uc
 import visualsearch.request_objects as req
+import logging
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='(%(threadName)-9s) %(message)s',)
 connection_data = {
     'dbname': 'visualsearch',
     'user': 'visualsearch',
