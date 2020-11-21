@@ -23,7 +23,7 @@ def domain_images():
     img3 = Image(code=uuid.uuid4(), path = os.path.join(FIXTURE_DIR, "img3.jpg"),
             unit_features = np.arange(2048),
             magnitude = 91.8)
-    
+
     return [img1, img2, img3]
 
 def test_save_image(domain_images):
@@ -38,7 +38,7 @@ def test_save_image(domain_images):
 
     # expected return values for mocked functions
     repo.save_image.return_value = 1
-    feature_extractor.process_image.return_value = domain_images[0] 
+    feature_extractor.process_image.return_value = domain_images[0]
 
     use_case_save_image = uc.SaveImage(repo, feature_extractor)
     request_object = req.ImageRequestObject.from_dict({'params':{'path': file_path}})
@@ -55,6 +55,7 @@ def test_save_image_all(domain_images):
 
     # expected return values
     repo.save_image.return_value = 1
+    repo.close_save_batch_process.return_value = 3
     feature_extractor.process_batch.return_value = domain_images
 
     request_object = req.ImageRequestObject.from_dict({'params':{'path': FIXTURE_DIR}})
@@ -62,6 +63,5 @@ def test_save_image_all(domain_images):
     response = use_case_save_image.execute(request_object)
     logging.debug(response.value)
     assert bool(response) is True
-    assert repo.save_image.call_count == 3
     feature_extractor.process_batch.assert_called_with(FIXTURE_DIR)
     assert response.value == 3
