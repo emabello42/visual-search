@@ -35,11 +35,11 @@ class FeatureExtractor():
         self.data_transform = transforms.Compose([transforms.RandomResizedCrop(224),
                                                   transforms.ToTensor(),
                                                   transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
-                                                                       0.229, 0.224, 0.225]),
+                                                      0.229, 0.224, 0.225]),
                                                   ])
         self.use_gpu = torch.cuda.is_available()
         if self.use_gpu:
-            self.model.to('cuda')
+            self.model = self.model.cuda()
         self.model.eval()
         self.stats = ProcessingStats()
 
@@ -49,11 +49,11 @@ class FeatureExtractor():
         output_batch = self.__compute_features(data)
 
         new_image = Image(
-                        code = uuid.uuid4(),
-                        path = path,
-                        unit_features = output_batch.unit_features[0],
-                        magnitude = output_batch.magnitudes[0].item()
-                        )
+            code=uuid.uuid4(),
+            path=path,
+            unit_features=output_batch.unit_features[0],
+            magnitude=output_batch.magnitudes[0].item()
+        )
 
         return new_image
 
@@ -64,8 +64,6 @@ class FeatureExtractor():
 
         for batch_idx, (data, paths) in enumerate(image_loader):
             output_batch = self.__compute_features(data)
-            # TODO: send the output_batch as fast as possible to another
-            # parallel process/thread
             yield output_batch, paths
         logging.debug(str(self.stats))
 
@@ -73,12 +71,10 @@ class FeatureExtractor():
         self.stats.start("compute_features")
         output_batch = namedtuple("BatchFeatures", "unit_features magnitudes")
         if self.use_gpu:
-            input_batch = input_batch.to('cuda')
+            input_batch = input_batch.cuda()
         with torch.no_grad():
             unit_features, magnitudes = self.model(input_batch)
-
-        output_batch.unit_features = unit_features.cpu().numpy()
-        output_batch.magnitudes = magnitudes.cpu().numpy()
+        output_batch.unit_features = unit_features
+        output_batch.magnitudes = magnitudes
         self.stats.end("compute_features")
         return output_batch
-

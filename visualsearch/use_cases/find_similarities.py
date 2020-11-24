@@ -1,7 +1,6 @@
 import visualsearch.response_objects as res
-import uuid
 import os
-from visualsearch.domain.image import Image
+
 
 class FindSimilarities():
     def __init__(self, repository, feature_extractor):
@@ -16,8 +15,8 @@ class FindSimilarities():
             file_path = request_obj.params['path']
             if os.path.isfile(file_path):
                 query_image = self.feature_extractor.process_image(file_path)
-                images = self.repo.find_similars(query_image)
-                return res.ResponseSuccess(images)
+                similars = self.repo.find_similars(query_image)
+                return res.ResponseSuccess(similars)
             else:
                 raise Exception("File or directory {} does not exist".format(file_path))
         except Exception as exc:

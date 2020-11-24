@@ -8,6 +8,7 @@ import uuid
 from visualsearch.utils import ProcessingStats
 import logging
 
+
 class PostgresRepo:
     def __init__(self, connection_data, features_file):
         connection_string = "postgresql+psycopg2://{}:{}@{}/{}".format(
@@ -27,6 +28,8 @@ class PostgresRepo:
     def save_image(self, image):
         DBSession = sessionmaker(bind=self.engine)
         session = DBSession()
+        image.unit_features = image.unit_features.cpu().numpy()
+        image.magnitude = image.magnitude.cpu().numpy()
         feat_idx = self.features_repo.add(image.unit_features)
         pg_img = pgImage(code=image.code, path=image.path, features_idx=feat_idx, magnitude=image.magnitude.item())
         session.add(pg_img)
@@ -48,6 +51,8 @@ class PostgresRepo:
         while True:
             output_batch, paths = self.save_queue.get()
             self.stats.start("save_batch")
+            output_batch.unit_features = output_batch.unit_features.cpu().numpy()
+            output_batch.magnitudes = output_batch.magnitudes.cpu().numpy()
             for idx, (unit_features, magnitude) in enumerate(zip(output_batch.unit_features, output_batch.magnitudes)):
                 feat_idx = self.features_repo.add(unit_features)
                 pg_img = pgImage(code=uuid.uuid4(), path=paths[idx], features_idx=feat_idx, magnitude=magnitude.item())
@@ -58,5 +63,21 @@ class PostgresRepo:
             self.save_queue.task_done()
             self.stats.end("save_batch")
 
-    def find_similars(self, image):
-        pass
+    def find_similars(self, image, topk=5):
+        indices, values = self.features_repo.find_similars(image.unit_features, topk)
+        indices = indices.cpu().numpy().tolist()
+        values = values.cpu().numpy().tolist()
+        DBSession = sessionmaker(bind=self.engine)
+        db_session = DBSession()
+        self.stats.start("query db")
+        similars = db_session.query(pgImage).filter(pgImage.features_idx.in_(indices)).all()
+        self.stats.end("query db")
+        paths_dict = {}
+        for s in similars:
+            paths_dict[s.features_idx] = s.path
+        result = []
+        for i, v in zip(indices, values):
+            result.append((paths_dict[i], v))
+        logging.info(str(self.stats))
+        return result
+
