@@ -26,25 +26,25 @@ def domain_images():
 
     return [img1, img2, img3]
 
-
-def test_save_image(domain_images):
-    repo = mock.Mock()
-    feature_extractor = mock.Mock()
-
-    file_path = domain_images[0].path
-
-    # expected return values for mocked functions
-    repo.save_image.return_value = 1
-    feature_extractor.process_image.return_value = domain_images[0]
-
-    use_case_save_image = uc.SaveImage(repo, feature_extractor)
-    request_object = req.ImageRequestObject.from_dict({'params': {'path': file_path}})
-    response = use_case_save_image.execute(request_object)
-    logging.debug(response.value)
-    assert bool(response) is True
-    feature_extractor.process_image.assert_called_with(file_path)
-    repo.save_image.assert_called_with(domain_images[0])
-    assert response.value == 1
+#
+# def test_save_image(domain_images):
+#     repo = mock.Mock()
+#     feature_extractor = mock.Mock()
+#
+#     file_path = domain_images[0].path
+#
+#     # expected return values for mocked functions
+#     repo.save_image.return_value = 1
+#     feature_extractor.process_image.return_value = domain_images[0]
+#
+#     use_case_save_image = uc.SaveImage(repo, feature_extractor)
+#     request_object = req.ImageRequestObject.from_dict({'params': {'path': file_path}})
+#     response = use_case_save_image.execute(request_object)
+#     logging.debug(response.value)
+#     assert bool(response) is True
+#     feature_extractor.process_image.assert_called_with(file_path)
+#     repo.save_image.assert_called_with(domain_images[0])
+#     assert response.value == 1
 
 
 def test_save_image_all(domain_images):

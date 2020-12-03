@@ -12,13 +12,9 @@ class FindSimilarities():
             return res.ResponseFailure.build_from_invalid_request_object(request_obj)
 
         try:
-            file_path = request_obj.params['path']
-            if os.path.isfile(file_path):
-                query_image = self.feature_extractor.process_image(file_path)
-                similars = self.repo.find_similars(query_image)
-                return res.ResponseSuccess(similars)
-            else:
-                raise Exception("File or directory {} does not exist".format(file_path))
+            features = self.feature_extractor.process_image(request_obj.image)
+            similars = self.repo.find_similars(features)
+            return res.ResponseSuccess(similars)
         except Exception as exc:
             return res.ResponseFailure.build_system_error(
                     "{}: {}".format(exc.__class__.__name__, "{}".format(exc)))

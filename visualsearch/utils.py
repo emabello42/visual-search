@@ -1,6 +1,8 @@
 import io
 import numpy as np
 import time
+import numpy as np
+from PIL import Image as PILImage
 
 
 class ProcessingStats:
@@ -39,3 +41,8 @@ def convert_array(byte_data):
     """ Convert binary array stored in the database to numpy array representation """
     data = np.load(io.BytesIO(byte_data))
     return data['arr']
+
+
+def from_bytes_to_image(byte_data):
+    npimg = np.frombuffer(byte_data, np.uint8)
+    return PILImage.fromarray(npimg).convert('RGB')

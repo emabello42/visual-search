@@ -18,6 +18,8 @@ pytest-datafiles = "*"
 h5py = "*"
 pytest-mpi = "*"
 sqlalchemy-utils = "*"
+pytest-flask = "*"
+gunicorn = "*"
 
 [dev-packages]
 

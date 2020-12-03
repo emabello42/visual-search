@@ -6,6 +6,7 @@ import queue
 import threading
 import uuid
 from visualsearch.utils import ProcessingStats
+from visualsearch.domain.similarity import Similarity
 import logging
 
 
@@ -63,10 +64,10 @@ class PostgresRepo:
             self.save_queue.task_done()
             self.stats.end("save_batch")
 
-    def find_similars(self, image, topk=5):
-        indices, values = self.features_repo.find_similars(image.unit_features, topk)
+    def find_similars(self, features, topk=5):
+        indices, scores = self.features_repo.find_similars(features, topk)
         indices = indices.cpu().numpy().tolist()
-        values = values.cpu().numpy().tolist()
+        scores = scores.cpu().numpy().tolist()
         DBSession = sessionmaker(bind=self.engine)
         db_session = DBSession()
         self.stats.start("query db")
@@ -76,8 +77,8 @@ class PostgresRepo:
         for s in similars:
             paths_dict[s.features_idx] = s.path
         result = []
-        for i, v in zip(indices, values):
-            result.append((paths_dict[i], v))
+        for i, score in zip(indices, scores):
+            result.append(Similarity(path=paths_dict[i], score=score))
         logging.info(str(self.stats))
         return result
 

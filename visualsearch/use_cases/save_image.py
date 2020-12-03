@@ -14,22 +14,14 @@ class SaveImage:
 
         try:
             path = request_obj.params['path']
-            if os.path.isfile(path):
-                saved_images_count = self.__save_image(file_path=path)
-                return res.ResponseSuccess(saved_images_count)
-            elif os.path.isdir(path):
+            if os.path.isdir(path):
                 saved_images_count = self.__save_image_all(dir_path=path)
                 return res.ResponseSuccess(saved_images_count)
             else:
-                raise Exception("File or directory {} does not exist".format(path))
+                raise Exception("Directory {} does not exist".format(path))
         except Exception as exc:
             return res.ResponseFailure.build_system_error(
                 "{}: {}".format(exc.__class__.__name__, "{}".format(exc)))
-
-    def __save_image(self, file_path):
-        new_image = self.feature_extractor.process_image(file_path)
-        saved_images_count = self.repo.save_image(new_image)
-        return saved_images_count
 
     def __save_image_all(self, dir_path):
         self.repo.start_save_batch_process()

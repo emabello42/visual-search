@@ -43,19 +43,11 @@ class FeatureExtractor():
         self.model.eval()
         self.stats = ProcessingStats()
 
-    def process_image(self, path):
-        img = PILImage.open(path)
+    def process_image(self, img):
         data = self.data_transform(img).unsqueeze(0)
         output_batch = self.__compute_features(data)
 
-        new_image = Image(
-            code=uuid.uuid4(),
-            path=path,
-            unit_features=output_batch.unit_features[0],
-            magnitude=output_batch.magnitudes[0].item()
-        )
-
-        return new_image
+        return output_batch.unit_features[0]
 
     def process_batch(self, path):
         image_data = CustomImageDataSet(path, transform=self.data_transform)

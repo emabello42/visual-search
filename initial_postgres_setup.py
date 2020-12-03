@@ -4,10 +4,10 @@ import sqlalchemy_utils
 from visualsearch.repository.postgres_objects import Base
 
 setup = {
-    'dbname': 'visualsearch',
-    'user': 'visualsearch',
-    'password': 'visualsearch',
-    'host': 'localhost'
+    'dbname': "visualsearchdb",
+    'user': "postgres",
+    'password': "",
+    'host': "localhost"
 }
 
 conn_str = "postgresql+psycopg2://{}:{}@{}/{}".format(

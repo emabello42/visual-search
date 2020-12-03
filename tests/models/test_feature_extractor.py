@@ -2,6 +2,8 @@ from visualsearch.models import feature_extractor as fe
 import os
 import pytest
 import torch
+from PIL import Image as PILImage
+
 from visualsearch.domain import image as i
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../testdata")
 
@@ -9,10 +11,8 @@ FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../test
 def test_process_image():
     feature_extractor = fe.FeatureExtractor()
     file_img = os.path.join(FIXTURE_DIR, "img1.jpg")
-    features = feature_extractor.process_image(path=file_img)
-    assert torch.norm(features.unit_features) == pytest.approx(1.0)
-    assert features.magnitude >= 0
-    assert features.path == file_img
+    features = feature_extractor.process_image(PILImage.open(file_img))
+    assert torch.norm(features) == pytest.approx(1.0)
 
 
 def test_process_image_batch():
