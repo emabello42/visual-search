@@ -22,7 +22,8 @@ def test_process_image_batch():
         os.path.join(FIXTURE_DIR, "img2.jpg"),
         os.path.join(FIXTURE_DIR, "img3.jpg")
     ]
-    for output_batch, paths in feature_extractor.process_batch(path=FIXTURE_DIR):
+    image_data = feature_extractor.get_image_data(path=FIXTURE_DIR)
+    for output_batch, paths in feature_extractor.process_batch(image_data):
         for idx, (unit_features, magnitude) in enumerate(zip(output_batch.unit_features, output_batch.magnitudes)):
             assert torch.norm(unit_features) == pytest.approx(1.0)
             assert magnitude.item() >= 0

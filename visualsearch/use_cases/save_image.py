@@ -24,8 +24,9 @@ class SaveImage:
                 "{}: {}".format(exc.__class__.__name__, "{}".format(exc)))
 
     def __save_image_all(self, dir_path):
-        self.repo.start_save_batch_process()
-        for data in self.feature_extractor.process_batch(dir_path):
+        image_data = self.feature_extractor.get_image_data(dir_path)
+        self.repo.start_save_batch_process(len(image_data))
+        for data in self.feature_extractor.process_batch(image_data):
             self.repo.save_queue.put(data)
         cnt_saved_images = self.repo.close_save_batch_process()
         return cnt_saved_images

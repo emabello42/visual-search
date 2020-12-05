@@ -2,14 +2,13 @@ from visualsearch.models.resnetext import ResnetExt
 from visualsearch.utils import ProcessingStats
 from torchvision import transforms
 import torch
-from PIL import Image as PILImage
 from visualsearch.configs import FeatureExtractorConfig as Cfg
 from collections import namedtuple
+import logging
+
 from torch.utils.data import Dataset
 import os
-import uuid
-from visualsearch.domain.image import Image
-import logging
+from PIL import Image as PILImage
 
 
 class CustomImageDataSet(Dataset):
@@ -28,7 +27,8 @@ class CustomImageDataSet(Dataset):
         return tensor_image, img_loc
 
 
-class FeatureExtractor():
+
+class FeatureExtractor:
 
     def __init__(self):
         self.model = ResnetExt()
@@ -49,11 +49,13 @@ class FeatureExtractor():
 
         return output_batch.unit_features[0]
 
-    def process_batch(self, path):
+    def get_image_data(self, path):
         image_data = CustomImageDataSet(path, transform=self.data_transform)
+        return image_data
+
+    def process_batch(self, image_data):
         image_loader = torch.utils.data.DataLoader(image_data, Cfg.batch_size, shuffle=False,
                                                    num_workers=Cfg.num_workers)
-
         for batch_idx, (data, paths) in enumerate(image_loader):
             output_batch = self.__compute_features(data)
             yield output_batch, paths

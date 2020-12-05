@@ -21,7 +21,7 @@ class NumpyRepo:
             self.features_mat = []
 
     def commit(self):
-        np.save(self.numpy_file, np.array(self.features_mat))
+        np.save(self.numpy_file, np.array(self.features_mat, dtype=np.float32))
 
     def add(self, features):
         self.features_mat.append(features)
@@ -37,8 +37,9 @@ class NumpyRepo:
         if self.use_gpu:
             features_mat = features_mat.cuda()
             features_v = features_v.cuda()
-
         self.stats.start("numpyrepo - matrix multiplication")
+        logging.info(features_mat.dtype)
+        logging.info(features_v.dtype)
         similarities_v = torch.matmul(features_mat, features_v.T)
         self.stats.end("numpyrepo - matrix multiplication")
         self.stats.start("numpyrepo - top k")

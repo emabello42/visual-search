@@ -55,11 +55,12 @@ def test_save_image_all(domain_images):
     repo.save_image.return_value = 1
     repo.close_save_batch_process.return_value = 3
     feature_extractor.process_batch.return_value = domain_images
-
+    image_data = [1,2,3]
+    feature_extractor.get_image_data.return_value = image_data
     request_object = req.ImageRequestObject.from_dict({'params': {'path': FIXTURE_DIR}})
     use_case_save_image = uc.SaveImage(repo, feature_extractor)
     response = use_case_save_image.execute(request_object)
     logging.debug(response.value)
     assert bool(response) is True
-    feature_extractor.process_batch.assert_called_with(FIXTURE_DIR)
+    feature_extractor.process_batch.assert_called_with(image_data)
     assert response.value == 3

@@ -1,5 +1,5 @@
 import visualsearch.response_objects as res
-import os
+import logging
 
 
 class FindSimilarities():

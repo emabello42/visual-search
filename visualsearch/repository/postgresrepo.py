@@ -1,7 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from visualsearch.repository.postgres_objects import Base, Image as pgImage
-from visualsearch.repository.numpyrepo import NumpyRepo
+# from visualsearch.repository.numpyrepo import NumpyRepo
+from visualsearch.repository.hdf5 import HDF5Repo
 import queue
 import threading
 import uuid
@@ -11,7 +12,7 @@ import logging
 
 
 class PostgresRepo:
-    def __init__(self, connection_data, features_file):
+    def __init__(self, connection_data, features_file, feat_mode="a"):
         connection_string = "postgresql+psycopg2://{}:{}@{}/{}".format(
             connection_data['user'],
             connection_data['password'],
@@ -21,7 +22,7 @@ class PostgresRepo:
         self.stats = ProcessingStats()
         self.engine = create_engine(connection_string)
         Base.metadata.bind = self.engine
-        self.features_repo = NumpyRepo(features_file)
+        self.features_repo = HDF5Repo(features_file, mode=feat_mode)
         self.save_queue = queue.Queue(10000)
         self.current_db_session = None
         self.cnt_saved_images = 0
@@ -38,13 +39,17 @@ class PostgresRepo:
         self.session.commit()
         return 1
 
-    def start_save_batch_process(self):
-        threading.Thread(target=self.__save_batch, daemon=True).start()
+    def start_save_batch_process(self, image_data_size):
         DBSession = sessionmaker(bind=self.engine)
         self.current_db_session = DBSession()
+        self.features_repo.reserve_space(image_data_size)
+        threading.Thread(target=self.__save_batch, daemon=True).start()
 
     def close_save_batch_process(self):
         self.save_queue.join()
+        self.stats.start("close features repo")
+        self.features_repo.close()
+        self.stats.end("close features repo")
         logging.debug(str(self.stats))
         return self.cnt_saved_images
 
@@ -55,12 +60,17 @@ class PostgresRepo:
             output_batch.unit_features = output_batch.unit_features.cpu().numpy()
             output_batch.magnitudes = output_batch.magnitudes.cpu().numpy()
             for idx, (unit_features, magnitude) in enumerate(zip(output_batch.unit_features, output_batch.magnitudes)):
+                self.stats.start("features add")
                 feat_idx = self.features_repo.add(unit_features)
+                self.stats.end("features add")
                 pg_img = pgImage(code=uuid.uuid4(), path=paths[idx], features_idx=feat_idx, magnitude=magnitude.item())
+                self.stats.start("db session add")
                 self.current_db_session.add(pg_img)
+                self.stats.end("db session add")
                 self.cnt_saved_images += 1
-            self.features_repo.commit()
+            self.stats.start("db session commit")
             self.current_db_session.commit()
+            self.stats.end("db session commit")
             self.save_queue.task_done()
             self.stats.end("save_batch")
 
