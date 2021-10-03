@@ -1,10 +1,11 @@
-from visualsearch.models import feature_extractor as fe
 import os
+
 import pytest
 import torch
 from PIL import Image as PILImage
 
-from visualsearch.domain import image as i
+from visualsearch.models import feature_extractor as fe
+
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../testdata")
 
 
